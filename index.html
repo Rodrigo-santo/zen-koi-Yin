@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Zen Koi: Yin</title>
+    <!-- Importação de Fonte no estilo caligráfico japonês minimalista (Hoshiko) -->
+    <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos Globais e Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1c1c1c; /* Cinza escuro minimalista de fundo */
+            font-family: 'Lora', 'Helvetica Neue', Arial, sans-serif;
+            color: #ccc;
+        }
+
+        /* Canvas de Renderização */
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: pointer;
+        }
+
+        /* Interface de Boas-Vindas / Overlay de Áudio */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(28, 28, 28, 0.97);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 1.5s ease-out, visibility 1.5s;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .zen-symbol {
+            font-size: 80px;
+            color: #eee;
+            margin-bottom: 20px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        h1 {
+            font-family: 'Sawarabi Mincho', serif; /* Fonte estilo Hoshiko */
+            font-size: 2.6rem;
+            font-weight: 300;
+            letter-spacing: 0.4em;
+            margin-bottom: 15px;
+            color: #eee;
+            text-transform: uppercase;
+        }
+
+        p {
+            font-size: 1rem;
+            font-weight: 300;
+            line-height: 1.8;
+            max-width: 460px;
+            color: #aaa;
+            margin-bottom: 35px;
+        }
+
+        .btn-start {
+            font-family: 'Sawarabi Mincho', serif;
+            background-color: #eee;
+            color: #1c1c1c;
+            border: none;
+            padding: 12px 40px;
+            font-size: 0.9rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn-start:hover {
+            background-color: #ccc;
+            transform: scale(1.05);
+        }
+
+        /* Controles no Canto Superior */
+        #audio-indicator {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            color: #777;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease-in;
+            z-index: 5;
+        }
+
+        #audio-indicator.show {
+            opacity: 1;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #888;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.5; }
+        }
+
+        /* Instrução de jogabilidade que desaparece */
+        #hint {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.9rem;
+            letter-spacing: 0.15em;
+            color: #666;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+            z-index: 5;
+        }
+
+        #hint.show {
+            opacity: 1;
+        }
+
+        /* Painel de Epílogo e Créditos Poéticos (Fase 5) */
+        #epilogue-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 8;
+            pointer-events: none; /* Deixa o clique passar para guiar o peixe */
+            text-align: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        #epilogue-overlay.show {
+            opacity: 1;
+        }
+
+        .epilogue-poem {
+            font-family: 'Sawarabi Mincho', serif;
+            font-size: 1.35rem;
+            line-height: 2.2;
+            color: #eaeaea;
+            max-width: 680px;
+            letter-spacing: 0.15em;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .epilogue-dedication {
+            font-size: 0.95rem;
+            color: #889296;
+            max-width: 500px;
+            line-height: 1.8;
+            margin-bottom: 50px;
+            letter-spacing: 0.12em;
+            text-shadow: 0 0 8px rgba(0,0,0,0.8);
+        }
+
+        .epilogue-credits {
+            font-family: 'Sawarabi Mincho', serif;
+            font-size: 0.85rem;
+            color: #555c60;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Painel Inicial de Entrada -->
+    <div id="overlay">
+        <div class="zen-symbol">☯</div>
+        <h1>Zen Koi</h1>
+        <p>
+            Clique e segure para guiar o Koi minimalista.<br>
+            Sente a harmonia do som e relaxa.
+        </p>
+        <button class="btn-start" onclick="iniciarExperiencia()">Entrar no Lago</button>
+    </div>
+
+    <!-- Indicador de Som Ativo -->
+    <div id="audio-indicator">
+        <div class="pulse-dot"></div>
+        <span>ÁUDIO ATIVO</span>
+    </div>
+
+    <!-- Instrução rápida para o utilizador -->
+    <div id="hint">Clique e segure para guiar...</div>
+
+    <!-- Painel de Epílogo Poético na Fase 5 -->
+    <div id="epilogue-overlay">
+        <div class="epilogue-poem">
+            "EU NADEI ATÉ VOCÊ COM TUDO O QUE EU TINHA, <br>MAS O QUE EU AMAVA JÁ NÃO EXISTIA MAIS"
+        </div>
+        <div class="epilogue-dedication">
+            Este jogo foi a forma de expressar uma perda que tive de um amor passageiro. Obrigado L.
+        </div>
+        <div class="epilogue-credits">
+            Criado por Rodrigo Alves
+        </div>
+    </div>
+
+    <!-- Tela do Jogo -->
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        // --- CONFIGURAÇÕES DE ÁUDIO ---
+        const URL_MUSICA_BACKGROUND = "https://assets.mixkit.co/music/preview/mixkit-zen-meditation-ambient-sound-591.mp3";
+
+        // --- PREPARAÇÃO DO CANVAS & SELEÇÃO DE ELEMENTOS ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const epilogueUI = document.getElementById('epilogue-overlay');
+
+        // --- DECLARAÇÃO DE VARIÁVEIS GLOBAIS ---
+        let faseAtual = 1; // Fase 1: Lago, Fase 2: Pedras, Fase 3: Sapos, Fase 4: O Predador, Fase 5: O Luto
+        let pedras = [];
+        let manchaSangue = null; // Detalhe estético expandido da Fase 5
+        let fadeEscurecimento = 0; // Controla o escurecimento do lago na Fase 5 por proximidade
+
+        // Entidades dos Sapos Enamorados para a Fase 3
+        const sapoEsquerdo = {
+            x: 0, y: 0,
+            targetX: 0, targetY: 0,
+            startX: 0, startY: 0,
+            raio: 14,
+            pedraIdx: 0,
+            progress: 1.0, 
+            faseAr: 0,
+            tamanhoSapo: 15
+        };
+
+        const sapoDireito = {
+            x: 0, y: 0,
+            targetX: 0, targetY: 0,
+            startX: 0, startY: 0,
+            raio: 15,
+            pedraIdx: 0,
+            progress: 1.0,
+            faseAr: 0,
+            tamanhoSapo: 15
+        };
+
+        // Entidade do Gato Predador para a Fase 4 (Sombra realista sem círculo vermelho)
+        const predadorGato = {
+            active: false,
+            x: 0,
+            y: -200,
+            targetX: 0,
+            targetY: 150,
+            raioAtaque: 80,
+            estado: "espreitando", // "espreitando", "avisando", "atacando", "recuando"
+            timer: 0,
+            pataY: -300,
+            garrasAbertas: false,
+            escalaPata: 1.0
+        };
+
+        // --- DECLARAÇÃO DO PEIXE BRANCO (YANG / MORTO NA FASE 5) ---
+        const peixeBranco = {
+            espinha: [],
+            numSegmentos: 10,  
+            distSegmento: 10,  
+            
+            x: 0,
+            y: 0,
+            angulo: 0,
+            velocidade: 0,
+            
+            maxVelocidade: 1.6, 
+            aceleracao: 0.02,
+            desaceleracao: 0.015,
+            friccao: 0.98,
+
+            faseOndas: 0,
+            active: false,
+            state: "circling", // "circling", "swimming_away", "dead"
+            timer: 0,
+            targetAngle: 0,
+            awayTargetX: 0,
+            awayTargetY: 0,
+
+            init: function() {
+                this.espinha = [];
+                for (let i = 0; i < this.numSegmentos; i++) {
+                    this.espinha.push({
+                        x: this.x - i * this.distSegmento,
+                        y: this.y,
+                        angulo: this.angulo
+                    });
+                }
+            },
+
+            atualizar: function() {
+                if (!this.active) return;
+
+                // Auto-inicialização caso a espinha dorsal esteja vazia por problemas de temporização
+                if (!this.espinha || this.espinha.length < this.numSegmentos) {
+                    this.init();
+                }
+
+                if (this.state === "dead") {
+                    this.faseOndas += 0.005;
+                    // Corpo ligeiramente arqueado/torto de luto na água (Mais realista de lado)
+                    const oscilacaoInerte = Math.sin(this.faseOndas) * 0.12;
+                    this.angulo = Math.PI * 0.35 + oscilacaoInerte;
+                    
+                    if (this.espinha[0]) {
+                        this.espinha[0].x = this.x;
+                        this.espinha[0].y = this.y;
+                        this.espinha[0].angulo = this.angulo;
+                    }
+
+                    for (let i = 1; i < this.numSegmentos; i++) {
+                        const segAnterior = this.espinha[i-1];
+                        const segAtual = this.espinha[i];
+                        
+                        if (segAnterior && segAtual) {
+                            // Curvatura passiva que deforma o corpo sem rigidez artificial
+                            let anguloDesejado = segAnterior.angulo + Math.sin(this.faseOndas - i * 0.38) * 0.06;
+                            segAtual.angulo = anguloDesejado;
+                            segAtual.x = segAnterior.x - Math.cos(segAtual.angulo) * this.distSegmento;
+                            segAtual.y = segAnterior.y - Math.sin(segAtual.angulo) * this.distSegmento;
+                        }
+                    }
+                    return;
+                }
+
+                let targetX, targetY;
+
+                if (this.state === "circling") {
+                    this.timer++;
+                    
+                    this.targetAngle += 0.012; 
+                    const raioCirculo = 150;
+                    targetX = canvas.width / 2 + Math.cos(this.targetAngle) * raioCirculo;
+                    targetY = canvas.height / 2 + Math.sin(this.targetAngle) * raioCirculo;
+                    
+                    this.velocidade = 1.1;
+                    this.faseOndas += 0.045;
+
+                    if (this.timer > 600) {
+                        this.state = "swimming_away";
+                        this.awayTargetX = this.x + (Math.random() * 200 - 100); 
+                        this.awayTargetY = -400; 
+                    }
+                } else if (this.state === "swimming_away") {
+                    targetX = this.awayTargetX;
+                    targetY = this.awayTargetY;
+
+                    if (this.velocidade < this.maxVelocidade) {
+                        this.velocidade += this.aceleracao;
+                    }
+                    this.faseOndas += this.velocidade * 0.06 + 0.03;
+
+                    if (this.y < -300) {
+                        this.active = false;
+                    }
+                }
+
+                const dx = targetX - this.espinha[0].x;
+                const dy = targetY - this.espinha[0].y;
+                const distancia = Math.hypot(dx, dy);
+
+                if (distancia > 5) {
+                    const anguloAlvo = Math.atan2(dy, dx);
+                    let diff = anguloAlvo - this.angulo;
+                    while (diff < -Math.PI) diff += Math.PI * 2;
+                    while (diff > Math.PI) diff -= Math.PI * 2;
+                    this.angulo += diff * 0.05; 
+                }
+
+                this.x += Math.cos(this.angulo) * this.velocidade;
+                this.y += Math.sin(this.angulo) * this.velocidade;
+
+                if (this.espinha[0]) {
+                    this.espinha[0].x = this.x;
+                    this.espinha[0].y = this.y;
+                    this.espinha[0].angulo = this.angulo;
+                }
+
+                for (let i = 1; i < this.numSegmentos; i++) {
+                    const segAnterior = this.espinha[i-1];
+                    const segAtual = this.espinha[i];
+                    
+                    if (segAnterior && segAtual) {
+                        let anguloDesejado = Math.atan2(segAnterior.y - segAtual.y, segAnterior.x - segAtual.x);
+                        
+                        let diffSeg = anguloDesejado - segAnterior.angulo;
+                        while (diffSeg < -Math.PI) diffSeg += Math.PI * 2;
+                        while (diffSeg > Math.PI) diffSeg -= Math.PI * 2;
+
+                        const limiteDobradura = 0.55;
+                        if (Math.abs(diffSeg) > limiteDobradura) {
+                            diffSeg = Math.sign(diffSeg) * limiteDobradura;
+                            anguloDesejado = segAnterior.angulo + diffSeg;
+                        }
+                        
+                        segAtual.angulo = anguloDesejado;
+                        segAtual.x = segAnterior.x - Math.cos(segAtual.angulo) * this.distSegmento;
+                        segAtual.y = segAnterior.y - Math.sin(segAtual.angulo) * this.distSegmento;
+                    }
+                }
+
+                const seg1 = this.espinha[1];
+                if (seg1) {
+                    let diffPescoco = this.angulo - seg1.angulo;
+                    while (diffPescoco < -Math.PI) diffPescoco += Math.PI * 2;
+                    while (diffPescoco > Math.PI) diffPescoco -= Math.PI * 2;
+
+                    const limitePescoco = 0.60;
+                    if (Math.abs(diffPescoco) > limitePescoco) {
+                        diffPescoco = Math.sign(diffPescoco) * limitePescoco;
+                        this.angulo = seg1.angulo + diffPescoco;
+                        if (this.espinha[0]) {
+                            this.espinha[0].angulo = this.angulo;
+                        }
+                    }
+                }
+            },
+
+            desenhar: function() {
+                if (!this.active) return;
+
+                const largurasCorpo = [14, 16, 17, 15, 12, 10, 8, 6, 4, 2];
+                const corTraco = 'rgba(15, 15, 15, 0.9)'; 
+                const corPreenchimento = (this.state === "dead") ? 'rgba(175, 185, 190, 0.65)' : 'rgba(245, 245, 245, 0.85)'; 
+
+                const ptEsquerda = [];
+                const ptDireita = [];
+
+                for (let i = 0; i < this.numSegmentos; i++) {
+                    const seg = this.espinha[i];
+                    if (seg) {
+                        const normalX = -Math.sin(seg.angulo);
+                        const normalY = Math.cos(seg.angulo);
+                        const w = largurasCorpo[i];
+
+                        ptEsquerda.push({ x: seg.x + normalX * w, y: seg.y + normalY * w });
+                        ptDireita.push({ x: seg.x - normalX * w, y: seg.y - normalY * w });
+                    }
+                }
+
+                if (ptEsquerda.length < this.numSegmentos || ptDireita.length < this.numSegmentos) return;
+
+                ctx.save();
+
+                const inclinaMorte = (this.state === "dead") ? 0.35 : 0.0;
+
+                // --- BARBATANAS PEITORAIS LATERAIS ---
+                const desenharPeitoralEstiloFolha = (segIdx, lado) => {
+                    const seg = this.espinha[segIdx];
+                    if (!seg) return;
+                    const normalX = -Math.sin(seg.angulo);
+                    const normalY = Math.cos(seg.angulo);
+                    const pX = seg.x + normalX * largurasCorpo[segIdx] * lado;
+                    const pY = seg.y + normalY * largurasCorpo[segIdx] * lado;
+
+                    ctx.save();
+                    ctx.translate(pX, pY);
+                    
+                    const balancoFin = Math.sin(this.faseOndas * 1.1) * 0.12;
+                    ctx.rotate(seg.angulo + (Math.PI / 2.3) * lado + balancoFin * lado + inclinaMorte * lado);
+                    
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.3;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(12, -18 * lado, 25, -2 * lado); 
+                    ctx.quadraticCurveTo(15, 6 * lado, 0, 0);          
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(15, 15, 15, 0.3)';
+                    ctx.lineWidth = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(12, -11 * lado, 25, -2 * lado); 
+                    ctx.stroke();
+
+                    ctx.restore();
+                };
+
+                desenharPeitoralEstiloFolha(1, -1); 
+                desenharPeitoralEstiloFolha(1, 1);  
+
+                // --- BARBATANA DORSAL SUPERIOR MAIS GRACIOSA E DETALHADA ---
+                if (this.espinha[2]) {
+                    ctx.save();
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.espinha[2].x, this.espinha[2].y);
+                    
+                    for (let i = 2; i <= 7; i++) {
+                        const seg = this.espinha[i];
+                        if (seg) {
+                            const wave = Math.sin(this.faseOndas - i * 0.45) * 6;
+                            const normalX = -Math.sin(seg.angulo);
+                            const normalY = Math.cos(seg.angulo);
+                            const finDist = 6 + (i - 2) * 5; 
+                            ctx.lineTo(seg.x + normalX * (finDist + wave), seg.y + normalY * (finDist + wave));
+                        }
+                    }
+                    for (let i = 7; i >= 2; i--) {
+                        if (ptEsquerda[i]) ctx.lineTo(ptEsquerda[i].x, ptEsquerda[i].y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Nervuras internas
+                    ctx.strokeStyle = 'rgba(15, 15, 15, 0.25)';
+                    ctx.lineWidth = 0.8;
+                    for (let i = 3; i <= 6; i++) {
+                        if (this.espinha[i]) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.espinha[i].x, this.espinha[i].y);
+                            const wave = Math.sin(this.faseOndas - i * 0.45) * 6;
+                            const normalX = -Math.sin(this.espinha[i].angulo);
+                            const normalY = Math.cos(this.espinha[i].angulo);
+                            const finDist = 6 + (i - 2) * 5;
+                            ctx.lineTo(this.espinha[i].x + normalX * (finDist + wave), this.espinha[i].y + normalY * (finDist + wave));
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.restore();
+                }
+
+                // --- BARBATANA CAUDAL BÍFIDA ---
+                const caudaPonta = this.espinha[this.numSegmentos - 1];
+                if (caudaPonta) {
+                    ctx.save();
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.5;
+
+                    const anguloCauda = caudaPonta.angulo + Math.PI; 
+                    const amplitudeBalanço = Math.sin(this.faseOndas) * 15;
+
+                    const anguloPerpendicular = anguloCauda + Math.PI / 2;
+                    const swingX = Math.cos(anguloPerpendicular) * amplitudeBalanço;
+                    const swingY = Math.sin(anguloPerpendicular) * amplitudeBalanço;
+
+                    // Lobo Esquerdo
+                    ctx.beginPath();
+                    ctx.moveTo(caudaPonta.x, caudaPonta.y);
+                    const cpLeft1X = caudaPonta.x + Math.cos(anguloCauda - 0.45) * 45 + swingX;
+                    const cpLeft1Y = caudaPonta.y + Math.sin(anguloCauda - 0.45) * 45 + swingY;
+                    const endLeftX = caudaPonta.x + Math.cos(anguloCauda - 0.15) * 65 + swingX * 1.2;
+                    const endLeftY = caudaPonta.y + Math.sin(anguloCauda - 0.15) * 65 + swingY * 1.2;
+                    
+                    ctx.quadraticCurveTo(cpLeft1X, cpLeft1Y, endLeftX, endLeftY);
+                    ctx.quadraticCurveTo(caudaPonta.x + Math.cos(anguloCauda - 0.1) * 35, caudaPonta.y + Math.sin(anguloCauda - 0.1) * 35, caudaPonta.x, caudaPonta.y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(15, 15, 15, 0.3)';
+                    ctx.lineWidth = 0.8;
+                    for (let j = 1; j <= 3; j++) {
+                        const ratio = j / 4;
+                        ctx.beginPath();
+                        ctx.moveTo(caudaPonta.x, caudaPonta.y);
+                        ctx.quadraticCurveTo(
+                            cpLeft1X * (1 - ratio) + caudaPonta.x * ratio,
+                            cpLeft1Y * (1 - ratio) + caudaPonta.y * ratio,
+                            endLeftX, endLeftY
+                        );
+                        ctx.stroke();
+                    }
+
+                    // Lobo Direito
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(caudaPonta.x, caudaPonta.y);
+                    const cpRight1X = caudaPonta.x + Math.cos(anguloCauda + 0.45) * 45 + swingX;
+                    const cpRight1Y = caudaPonta.y + Math.sin(anguloCauda + 0.45) * 45 + swingY;
+                    const endRightX = caudaPonta.x + Math.cos(anguloCauda + 0.15) * 65 + swingX * 1.2;
+                    const endRightY = caudaPonta.y + Math.sin(anguloCauda + 0.15) * 65 + swingY * 1.2;
+                    
+                    ctx.quadraticCurveTo(cpRight1X, cpRight1Y, endRightX, endRightY);
+                    ctx.quadraticCurveTo(caudaPonta.x + Math.cos(anguloCauda + 0.1) * 35, caudaPonta.y + Math.sin(anguloCauda + 0.1) * 35, caudaPonta.x, caudaPonta.y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(240, 240, 240, 0.3)';
+                    ctx.lineWidth = 0.8;
+                    for (let j = 1; j <= 3; j++) {
+                        const ratio = j / 4;
+                        ctx.beginPath();
+                        ctx.moveTo(caudaPonta.x, caudaPonta.y);
+                        ctx.quadraticCurveTo(
+                            cpRight1X * (1 - ratio) + caudaPonta.x * ratio,
+                            cpRight1Y * (1 - ratio) + caudaPonta.y * ratio,
+                            endRightX, endRightY
+                        );
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+
+                // --- CORPO SILHUETA (Contorno) ---
+                const cabeca = this.espinha[0];
+                if (cabeca) {
+                    ctx.save();
+                    ctx.beginPath();
+                    const rCabeca = largurasCorpo[0];
+
+                    ctx.arc(cabeca.x, cabeca.y, rCabeca, cabeca.angulo - Math.PI/2, cabeca.angulo + Math.PI/2, false);
+
+                    for (let i = 1; i < this.numSegmentos; i++) {
+                        if (ptEsquerda[i]) ctx.lineTo(ptEsquerda[i].x, ptEsquerda[i].y);
+                    }
+                    for (let i = this.numSegmentos - 1; i >= 1; i--) {
+                        if (ptDireita[i]) ctx.lineTo(ptDireita[i].x, ptDireita[i].y);
+                    }
+
+                    ctx.closePath();
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.fill();
+
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.6;
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // --- NERVURAS ---
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(15, 15, 15, 0.5)';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.espinha[0].x, this.espinha[0].y);
+                    for (let i = 1; i < this.numSegmentos; i++) {
+                        if (this.espinha[i]) ctx.lineTo(this.espinha[i].x, this.espinha[i].y);
+                    }
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(15, 15, 15, 0.25)';
+                    ctx.lineWidth = 0.9;
+                    for (let i = 2; i < this.numSegmentos - 2; i++) {
+                        const seg = this.espinha[i];
+                        if (seg) {
+                            const normalLeftX = -Math.sin(seg.angulo - 0.4);
+                            const normalLeftY = Math.cos(seg.angulo - 0.4);
+                            const normalRightX = -Math.sin(seg.angulo + 0.4);
+                            const normalRightY = Math.cos(seg.angulo + 0.4);
+
+                            const extW = largurasCorpo[i] * 0.9;
+
+                            ctx.beginPath();
+                            ctx.moveTo(seg.x, seg.y);
+                            ctx.quadraticCurveTo(
+                                seg.x + normalLeftX * extW * 0.5,
+                                seg.y + normalLeftY * extW * 0.5,
+                                seg.x + normalLeftX * extW,
+                                seg.y + normalLeftY * extW
+                            );
+                            ctx.stroke();
+
+                            ctx.beginPath();
+                            ctx.moveTo(seg.x, seg.y);
+                            ctx.quadraticCurveTo(
+                                seg.x - normalRightX * extW * 0.5,
+                                seg.y - normalRightY * extW * 0.5,
+                                seg.x - normalRightX * extW,
+                                seg.y - normalRightY * extW
+                            );
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.restore();
+
+                    // --- TRÊS DETALHES CIRCULARES NA CABEÇA (Olhos invertidos: fundo preto, centro branco) ---
+                    ctx.save();
+                    ctx.translate(cabeca.x, cabeca.y);
+                    ctx.rotate(cabeca.angulo);
+
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.0;
+
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.3, 0, 3.2, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.1, -rCabeca * 0.5, 2.5, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.1, -rCabeca * 0.5, 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.1, rCabeca * 0.5, 2.5, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.1, rCabeca * 0.5, 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+
+                ctx.restore();
+            }
+        };
+
+        // --- SISTEMAS DE GERAÇÃO PROCEDIMENTAL DE PEDRAS ---
+        function gerarPedrasFase2() {
+            pedras = [];
+            const numPedras = 7 + Math.floor(Math.random() * 4); // Entre 7 e 10 pedras
+            const margemVertical = 150; 
+
+            for (let i = 0; i < numPedras; i++) {
+                const y = margemVertical + (i / (numPedras - 1)) * (canvas.height - margemVertical * 2);
+                const x = canvas.width * 0.2 + Math.random() * (canvas.width * 0.6);
+                const r = 40 + Math.random() * 35; // Tamanho base da rocha
+
+                const pontosDef = [];
+                const numPontos = 8 + Math.floor(Math.random() * 5); 
+                for (let j = 0; j < numPontos; j++) {
+                    const angulo = (j / numPontos) * Math.PI * 2;
+                    const FatorDeforma = 0.78 + Math.random() * 0.38; 
+                    pontosDef.push({
+                        x: Math.cos(angulo) * FatorDeforma,
+                        y: Math.sin(angulo) * FatorDeforma
+                    });
+                }
+
+                pedras.push({
+                    x: x,
+                    y: y,
+                    raio: r,
+                    pontos: pontosDef, 
+                    cor: `rgba(45, 45, 45, ${0.75 + Math.random() * 0.20})`,
+                    reflexoOffset: Math.random() * Math.PI
+                });
+            }
+        }
+
+        function gerarPedrasFase3() {
+            pedras = [];
+            const numPedrasPorLado = 6;
+            const margemVertical = 100;
+            const larguraPassagem = Math.max(canvas.width * 0.28, 220); 
+
+            // Fileira Esquerda
+            for (let i = 0; i < numPedrasPorLado; i++) {
+                const y = margemVertical + (i / (numPedrasPorLado - 1)) * (canvas.height - margemVertical * 2);
+                const x = (canvas.width / 2) - (larguraPassagem / 2) - 30 + (Math.random() * 20 - 10);
+                const r = 38 + Math.random() * 15;
+
+                const pontosDef = [];
+                const numPontos = 10;
+                for (let j = 0; j < numPontos; j++) {
+                    const angulo = (j / numPontos) * Math.PI * 2;
+                    const FatorDeforma = 0.85 + Math.random() * 0.25;
+                    pontosDef.push({ x: Math.cos(angulo) * FatorDeforma, y: Math.sin(angulo) * FatorDeforma });
+                }
+
+                pedras.push({
+                    x: x,
+                    y: y,
+                    raio: r,
+                    pontos: pontosDef,
+                    lado: "esquerdo",
+                    idx: i,
+                    cor: `rgba(42, 45, 42, ${0.8 + Math.random() * 0.15})`
+                });
+            }
+
+            // Fileira Direita
+            for (let i = 0; i < numPedrasPorLado; i++) {
+                const y = margemVertical + (i / (numPedrasPorLado - 1)) * (canvas.height - margemVertical * 2);
+                const x = (canvas.width / 2) + (larguraPassagem / 2) + 30 + (Math.random() * 20 - 10);
+                const r = 38 + Math.random() * 15;
+
+                const pontosDef = [];
+                const numPontos = 10;
+                for (let j = 0; j < numPontos; j++) {
+                    const angulo = (j / numPontos) * Math.PI * 2;
+                    const FatorDeforma = 0.85 + Math.random() * 0.25;
+                    pontosDef.push({ x: Math.cos(angulo) * FatorDeforma, y: Math.sin(angulo) * FatorDeforma });
+                }
+
+                pedras.push({
+                    x: x,
+                    y: y,
+                    raio: r,
+                    pontos: pontosDef,
+                    lado: "direito",
+                    idx: i,
+                    cor: `rgba(42, 45, 42, ${0.8 + Math.random() * 0.15})`
+                });
+            }
+        }
+
+        // Geração de algumas pedras decorativas na Fase 4 (O Gato) para dificultar o caminho do jogador
+        function gerarPedrasFase4() {
+            pedras = [];
+            const numPedras = 4 + Math.floor(Math.random() * 3); // 4 a 6 pedras para atrapalhar
+            const margemVertical = 180;
+
+            for (let i = 0; i < numPedras; i++) {
+                const y = margemVertical + (i / (numPedras - 1)) * (canvas.height - margemVertical * 2);
+                const x = canvas.width * 0.15 + Math.random() * (canvas.width * 0.7);
+                const r = 35 + Math.random() * 25;
+
+                const pontosDef = [];
+                const numPontos = 8;
+                for (let j = 0; j < numPontos; j++) {
+                    const angulo = (j / numPontos) * Math.PI * 2;
+                    const FatorDeforma = 0.8 + Math.random() * 0.3;
+                    pontosDef.push({ x: Math.cos(angulo) * FatorDeforma, y: Math.sin(angulo) * FatorDeforma });
+                }
+
+                pedras.push({
+                    x: x,
+                    y: y,
+                    raio: r,
+                    pontos: pontosDef,
+                    cor: `rgba(38, 40, 42, ${0.72 + Math.random() * 0.15})`
+                });
+            }
+        }
+
+        // --- SISTEMA DE INICIALIZAÇÃO DOS SAPOS (FASE 3) ---
+        function inicializarSaposFase3() {
+            const pedrasEsquerdas = pedras.filter(p => p.lado === "esquerdo").sort((a,b) => b.y - a.y); 
+            const pedrasDireitas = pedras.filter(p => p.lado === "direito").sort((a,b) => b.y - a.y);
+
+            if (pedrasEsquerdas.length > 0) {
+                sapoEsquerdo.pedraIdx = 0; 
+                sapoEsquerdo.x = pedrasEsquerdas[0].x;
+                sapoEsquerdo.y = pedrasEsquerdas[0].y;
+                sapoEsquerdo.targetX = sapoEsquerdo.x;
+                sapoEsquerdo.targetY = sapoEsquerdo.y;
+                sapoEsquerdo.startX = sapoEsquerdo.x;
+                sapoEsquerdo.startY = sapoEsquerdo.y;
+                sapoEsquerdo.progress = 1.0;
+            }
+
+            if (pedrasDireitas.length > 0) {
+                sapoDireito.pedraIdx = 0;
+                sapoDireito.x = pedrasDireitas[0].x;
+                sapoDireito.y = pedrasDireitas[0].y;
+                sapoDireito.targetX = sapoDireito.x;
+                sapoDireito.targetY = sapoDireito.y;
+                sapoDireito.startX = sapoDireito.x;
+                sapoDireito.startY = sapoDireito.y;
+                sapoDireito.progress = 1.0;
+            }
+        }
+
+        // --- SISTEMAS DE EVENTOS DE REDIMENSIONAMENTO ---
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (faseAtual === 2) {
+                gerarPedrasFase2();
+            } else if (faseAtual === 3) {
+                gerarPedrasFase3();
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- MOTOR DE ÁUDIO SINTETIZADO ÚNICO (Web Audio API) ---
+        let audioCtx = null;
+        let bgMusic = null;
+        let audioIniciado = false;
+        let gainMusicNode = null; // Nó de controlo de volume da música para transições tristes
+        let noiseGainNode = null; // Nó para o sussurro de ruído branco melancólico
+
+        function initAudio() {
+            if (audioIniciado) return;
+
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContextClass();
+
+            // Configurar a Música de Fundo
+            bgMusic = new Audio();
+            bgMusic.src = URL_MUSICA_BACKGROUND;
+            bgMusic.loop = true;
+            bgMusic.crossOrigin = "anonymous";
+
+            const source = audioCtx.createMediaElementSource(bgMusic);
+            gainMusicNode = audioCtx.createGain();
+            gainMusicNode.gain.setValueAtTime(0.12, audioCtx.currentTime); // Volume normal inicial
+
+            source.connect(gainMusicNode);
+            gainMusicNode.connect(audioCtx.destination);
+            
+            bgMusic.play().catch(err => {
+                console.log("Áudio bloqueado temporariamente pelo navegador.", err);
+            });
+
+            // --- GERADOR DE RUÍDO BRANCO MELANCÓLICO SINTETIZADO ---
+            const bufferSize = audioCtx.sampleRate * 2; // 2 segundos de som
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+
+            const lowpassFilter = audioCtx.createBiquadFilter();
+            lowpassFilter.type = 'lowpass';
+            lowpassFilter.frequency.setValueAtTime(280, audioCtx.currentTime); // Som abafado e sombrio
+            lowpassFilter.Q.setValueAtTime(1.0, audioCtx.currentTime);
+
+            noiseGainNode = audioCtx.createGain();
+            noiseGainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+
+            whiteNoise.connect(lowpassFilter);
+            lowpassFilter.connect(noiseGainNode);
+            noiseGainNode.connect(audioCtx.destination);
+            whiteNoise.start();
+
+            audioIniciado = true;
+            document.getElementById('audio-indicator').classList.add('show');
+        }
+
+        // Sintetizador avançado estilo Handpan (Escala D-Kurd / Escala de Luto)
+        function tocarSomGota(customFreq = null) {
+            if (!audioCtx || audioCtx.state === 'suspended') return;
+
+            try {
+                // Escala normal (Ré menor luminosa)
+                let escalaHandpan = [146.83, 174.61, 220.00, 261.63, 293.66, 349.23, 440.00, 523.25];
+                
+                // Transição de escalas de acordo com o clima melancólico
+                if (faseAtual === 3) {
+                    escalaHandpan = [110.00, 130.81, 146.83, 164.81, 220.00, 233.08, 293.66, 311.13]; // Lá menor triste
+                } else if (faseAtual === 4) {
+                    escalaHandpan = [98.00, 110.00, 116.54, 138.59, 146.83, 164.81, 196.00]; // Intervalos tensos e suspensos (Dissonantes de medo)
+                } else if (faseAtual === 5) {
+                    escalaHandpan = [82.41, 110.00, 123.47, 130.81, 146.83, 164.81]; // Mi menor desolado e fúnebre (Muito grave)
+                }
+
+                const freqBase = customFreq || escalaHandpan[Math.floor(Math.random() * escalaHandpan.length)];
+                const duracao = (faseAtual >= 3) ? 2.5 : 1.4; // Ressonâncias arrastadas para melancolia
+
+                const oscToque = audioCtx.createOscillator();
+                const gainToque = audioCtx.createGain();
+                
+                // Na Fase 4 (Gato), o toque é mais ríspido, simulando perigo
+                oscToque.type = (faseAtual === 4) ? 'sawtooth' : 'triangle';
+                oscToque.frequency.setValueAtTime(freqBase * 0.8, audioCtx.currentTime);
+                oscToque.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.05);
+
+                const volumeSlap = (faseAtual === 4) ? 0.001 : (faseAtual === 5 ? 0.0012 : 0.003);
+                gainToque.gain.setValueAtTime(volumeSlap, audioCtx.currentTime); 
+                gainToque.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+
+                const oscFund = audioCtx.createOscillator();
+                const gainFund = audioCtx.createGain();
+                oscFund.type = 'sine';
+                oscFund.frequency.setValueAtTime(freqBase, audioCtx.currentTime);
+
+                const volumePrincipal = (faseAtual === 4) ? 0.0015 : (faseAtual === 5 ? 0.0015 : 0.0025);
+                gainFund.gain.setValueAtTime(volumePrincipal, audioCtx.currentTime); 
+                gainFund.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duracao);
+
+                const oscOitava = audioCtx.createOscillator();
+                const gainOitava = audioCtx.createGain();
+                oscOitava.type = 'sine';
+                oscOitava.frequency.setValueAtTime(freqBase * 2.0, audioCtx.currentTime);
+
+                gainOitava.gain.setValueAtTime(0.0005, audioCtx.currentTime); 
+                gainOitava.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (duracao * 0.7));
+
+                const masterGain = audioCtx.createGain();
+                masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+
+                oscToque.connect(gainToque);
+                oscFund.connect(gainFund);
+                oscOitava.connect(gainOitava);
+
+                gainToque.connect(masterGain);
+                gainFund.connect(masterGain);
+                gainOitava.connect(masterGain);
+                masterGain.connect(audioCtx.destination);
+
+                oscToque.start();
+                oscFund.start();
+                oscOitava.start();
+
+                oscToque.stop(audioCtx.currentTime + 0.06);
+                oscFund.stop(audioCtx.currentTime + duracao);
+                oscOitava.stop(audioCtx.currentTime + duracao);
+            } catch (e) {}
+        }
+
+        // --- CONTROLO DAS FASES DO LAGO ---
+
+        function transitarParaFase1() {
+            faseAtual = 1;
+
+            // Oculta painel do epílogo
+            epilogueUI.classList.remove('show');
+            fadeEscurecimento = 0;
+
+            // Transição suave de volta ao volume normal
+            if (gainMusicNode) gainMusicNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 1.5);
+            if (noiseGainNode) noiseGainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
+
+            // Reposicionar jogador na parte inferior da Fase 1 para dar sensação de progressão contínua
+            peixe.y = canvas.height + 40;
+            peixe.x = canvas.width / 2;
+            peixe.angulo = -Math.PI / 2;
+            peixe.init();
+
+            // Reiniciar o Peixe Branco circulando no meio de novo
+            peixeBranco.x = canvas.width / 2;
+            peixeBranco.y = canvas.height / 2;
+            peixeBranco.angulo = Math.random() * Math.PI * 2;
+            peixeBranco.velocidade = 0;
+            peixeBranco.state = "circling";
+            peixeBranco.timer = 0;
+            peixeBranco.targetAngle = Math.random() * Math.PI * 2;
+            peixeBranco.active = true;
+            peixeBranco.init();
+        }
+
+        function transitarParaFase2() {
+            faseAtual = 2;
+
+            if (gainMusicNode) gainMusicNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 1.5);
+            if (noiseGainNode) noiseGainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
+            
+            peixe.y = canvas.height + 40;
+            peixe.x = canvas.width / 2;
+            peixe.angulo = -Math.PI / 2;
+            peixe.init();
+
+            gerarPedrasFase2();
+
+            peixeBranco.active = true;
+            peixeBranco.state = "swimming_away";
+            peixeBranco.x = canvas.width / 2;
+            peixeBranco.y = 80; 
+            peixeBranco.angulo = -Math.PI / 2; 
+            peixeBranco.velocidade = 1.6;
+            peixeBranco.awayTargetX = canvas.width / 2;
+            peixeBranco.awayTargetY = -400;
+            peixeBranco.init();
+
+            const hint = document.getElementById('hint');
+            hint.innerText = "Desvie das pedras para alcançar o topo";
+            hint.classList.add('show');
+            setTimeout(() => { hint.classList.remove('show'); }, 4000);
+        }
+
+        function transitarParaFase3() {
+            faseAtual = 3;
+
+            // Transição para música ligeiramente mais triste e sopro do desfiladeiro
+            if (gainMusicNode) gainMusicNode.gain.exponentialRampToValueAtTime(0.07, audioCtx.currentTime + 3.0); 
+            if (noiseGainNode) noiseGainNode.gain.exponentialRampToValueAtTime(0.015, audioCtx.currentTime + 3.0); 
+
+            peixe.y = canvas.height + 40;
+            peixe.x = canvas.width / 2;
+            peixe.angulo = -Math.PI / 2;
+            peixe.init();
+
+            gerarPedrasFase3();
+
+            peixeBranco.active = true;
+            peixeBranco.state = "swimming_away";
+            peixeBranco.x = canvas.width / 2;
+            peixeBranco.y = 120; 
+            peixeBranco.angulo = -Math.PI / 2;
+            peixeBranco.velocidade = 1.8;
+            peixeBranco.awayTargetX = canvas.width / 2;
+            peixeBranco.awayTargetY = -400;
+            peixeBranco.init();
+
+            inicializarSaposFase3();
+
+            const hint = document.getElementById('hint');
+            hint.innerText = "Siga o caminho. Veja os sapos saltarem.";
+            hint.classList.add('show');
+            setTimeout(() => { hint.classList.remove('show'); }, 4000);
+        }
+
+        function transitarParaFase4() {
+            faseAtual = 4;
+            
+            // Gerar pedras de obstáculo específicas para a Fase do Gato
+            gerarPedrasFase4();
+
+            // --- CLIMA DE TENSÃO E SUSPENSE (Fase 4: O Predador) ---
+            if (gainMusicNode) gainMusicNode.gain.exponentialRampToValueAtTime(0.03, audioCtx.currentTime + 2.0); // Música de fundo quase silenciada
+            if (noiseGainNode) noiseGainNode.gain.exponentialRampToValueAtTime(0.05, audioCtx.currentTime + 2.0); // Ruído de vento/sopro assume o controle
+
+            peixe.y = canvas.height + 40;
+            peixe.x = canvas.width / 2;
+            peixe.angulo = -Math.PI / 2;
+            peixe.init();
+
+            // O Peixe Branco já passou, não está ativo nesta fase.
+            peixeBranco.active = false;
+
+            // Inicializar comportamento do gato
+            predadorGato.active = true;
+            predadorGato.estado = "espreitando";
+            predadorGato.timer = 0;
+            predadorGato.pataY = -400;
+
+            const hint = document.getElementById('hint');
+            hint.innerText = "Cuidado com as sombras na água... Sobreviva.";
+            hint.classList.add('show');
+            setTimeout(() => { hint.classList.remove('show'); }, 4000);
+        }
+
+        function transitarParaFase5() {
+            faseAtual = 5;
+            predadorGato.active = false;
+            pedras = []; // Limpa quaisquer rochas para o luto limpo
+
+            // --- EXTREMA MELANCOLIA E LUTO (Fase 5: O Peixe Branco Caído) ---
+            if (gainMusicNode) gainMusicNode.gain.exponentialRampToValueAtTime(0.02, audioCtx.currentTime + 3.0); // Música quase inaudível de luto
+            if (noiseGainNode) noiseGainNode.gain.exponentialRampToValueAtTime(0.035, audioCtx.currentTime + 3.0); // Ruído branco de chuva fúnebre
+
+            peixe.y = canvas.height + 40;
+            peixe.x = canvas.width / 2;
+            peixe.angulo = -Math.PI / 2;
+            peixe.init();
+
+            // Inicializa Peixe Branco morto flutuando no topo
+            peixeBranco.active = true;
+            peixeBranco.state = "dead";
+            peixeBranco.x = canvas.width / 2;
+            peixeBranco.y = canvas.height * 0.28; // Flutuando no topo do ecrã
+            peixeBranco.angulo = Math.PI * 0.35; // De lado, inerte
+            peixeBranco.velocidade = 0;
+            peixeBranco.init();
+
+            // Inicializa mancha de sangue de vinho tinto que expande e se dissipa
+            manchaSangue = {
+                x: peixeBranco.x - 25,
+                y: peixeBranco.y - 10,
+                raio: 25,
+                raioAlvo: 180, // Expandido significativamente para se espalhar muito mais
+                opacidade: 0.0,
+                opacidadeAlvo: 0.45,
+                timerSopro: 0
+            };
+
+            const hint = document.getElementById('hint');
+            hint.innerText = "Um encontro silencioso... Contemple.";
+            hint.classList.add('show');
+            setTimeout(() => { hint.classList.remove('show'); }, 5000);
+        }
+
+        // --- SISTEMA DE ENTRADA DO JOGADOR ---
+        const cursor = {
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+            pressionado: false
+        };
+
+        // --- FÍSICA E DESIGN DO KOI JOGADOR ---
+        const peixe = {
+            espinha: [],
+            numSegmentos: 10,  
+            distSegmento: 10,  
+            
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+            angulo: 0,
+            velocidade: 0,
+            
+            maxVelocidade: 1.8, 
+            aceleracao: 0.025,  
+            desaceleracao: 0.015,
+            friccao: 0.98,
+
+            faseOndas: 0,
+            invulnTimer: 0, // Usado na colisão com o Predador
+
+            init: function() {
+                this.espinha = [];
+                for (let i = 0; i < this.numSegmentos; i++) {
+                    this.espinha.push({
+                        x: this.x - i * this.distSegmento,
+                        y: this.y,
+                        angulo: this.angulo
+                    });
+                }
+            },
+
+            atualizar: function() {
+                // Auto-inicialização caso a espinha dorsal esteja vazia por problemas de temporização
+                if (!this.espinha || this.espinha.length < this.numSegmentos) {
+                    this.init();
+                }
+
+                const dx = cursor.x - this.espinha[0].x;
+                const dy = cursor.y - this.espinha[0].y;
+                const distancia = Math.hypot(dx, dy);
+
+                if (this.invulnTimer > 0) {
+                    this.invulnTimer--;
+                }
+
+                if (distancia > 5) {
+                    const anguloAlvo = Math.atan2(dy, dx);
+                    let diff = anguloAlvo - this.angulo;
+                    while (diff < -Math.PI) diff += Math.PI * 2;
+                    while (diff > Math.PI) diff -= Math.PI * 2;
+                    this.angulo += diff * 0.08;
+                }
+
+                if (cursor.pressionado && distancia > 15) {
+                    this.velocidade += this.aceleracao;
+                    if (this.velocidade > this.maxVelocidade) {
+                        this.velocidade = this.maxVelocidade;
+                    }
+                    this.faseOndas += this.velocidade * 0.07 + 0.04;
+                } else {
+                    this.velocidade *= this.friccao;
+                    this.velocidade -= this.desaceleracao;
+                    if (this.velocidade < 0) this.velocidade = 0;
+                    this.faseOndas += 0.015; 
+                }
+
+                // Cálculo de nova posição
+                let proximoX = this.x + Math.cos(this.angulo) * this.velocidade;
+                let proximoY = this.y + Math.sin(this.angulo) * this.velocidade;
+
+                // --- SISTEMA DE COLISÃO COM AS PEDRAS ZEN (Fase 2, Fase 3 e Fase 4) ---
+                if (faseAtual === 2 || faseAtual === 3 || faseAtual === 4) {
+                    pedras.forEach(pedra => {
+                        // Verificação estrita de validade do objeto pedra e suas propriedades x e y
+                        if (!pedra || typeof pedra.x !== 'number' || typeof pedra.y !== 'number') return;
+                        const distPedra = Math.hypot(proximoX - pedra.x, proximoY - pedra.y);
+                        const colisaoRaio = (pedra.raio * 0.88) + 12; 
+
+                        if (distPedra < colisaoRaio) {
+                            const anguloColisao = Math.atan2(proximoY - pedra.y, proximoX - pedra.x);
+                            proximoX = pedra.x + Math.cos(anguloColisao) * colisaoRaio;
+                            proximoY = pedra.y + Math.sin(anguloColisao) * colisaoRaio;
+                            this.velocidade *= 0.85; 
+                        }
+                    });
+                }
+
+                this.x = proximoX;
+                this.y = proximoY;
+
+                // --- MECÂNICA DE TRANSIÇÃO DE BORDAS ---
+                const margem = 40;
+                
+                if (this.x < margem) this.x = margem;
+                if (this.x > canvas.width - margem) this.x = canvas.width - margem;
+
+                if (faseAtual === 1) {
+                    if (this.y > canvas.height - margem) this.y = canvas.height - margem;
+                    if (this.y < -margem) transitarParaFase2();
+                } else if (faseAtual === 2) {
+                    if (this.y > canvas.height + margem + 10) this.y = canvas.height + margem;
+                    if (this.y < -margem) transitarParaFase3();
+                } else if (faseAtual === 3) {
+                    if (this.y > canvas.height + margem + 10) this.y = canvas.height + margem;
+                    if (this.y < -margem) transitarParaFase4();
+                } else if (faseAtual === 4) {
+                    if (this.y > canvas.height + margem + 10) this.y = canvas.height + margem;
+                    if (this.y < -margem) transitarParaFase5(); 
+                } else if (faseAtual === 5) {
+                    if (this.y > canvas.height + margem + 10) this.y = canvas.height + margem;
+                    
+                    // Cruza por cima do Peixe Branco inerte e recomeça o ciclo de reencarnação (Fase 1)
+                    if (this.y < -margem) {
+                        transitarParaFase1();
+                    }
+                }
+
+                if (this.espinha[0]) {
+                    this.espinha[0].x = this.x;
+                    this.espinha[0].y = this.y;
+                    this.espinha[0].angulo = this.angulo;
+                }
+
+                for (let i = 1; i < this.numSegmentos; i++) {
+                    const segAnterior = this.espinha[i-1];
+                    const segAtual = this.espinha[i];
+                    
+                    if (segAnterior && segAtual) {
+                        let anguloDesejado = Math.atan2(segAnterior.y - segAtual.y, segAnterior.x - segAtual.x);
+                        
+                        let diffSeg = anguloDesejado - segAnterior.angulo;
+                        while (diffSeg < -Math.PI) diffSeg += Math.PI * 2;
+                        while (diffSeg > Math.PI) diffSeg -= Math.PI * 2;
+
+                        const limiteDobradura = 0.55; 
+                        if (Math.abs(diffSeg) > limiteDobradura) {
+                            diffSeg = Math.sign(diffSeg) * limiteDobradura;
+                            anguloDesejado = segAnterior.angulo + diffSeg;
+                        }
+                        
+                        segAtual.angulo = anguloDesejado;
+                        segAtual.x = segAnterior.x - Math.cos(segAtual.angulo) * this.distSegmento;
+                        segAtual.y = segAnterior.y - Math.sin(segAtual.angulo) * this.distSegmento;
+                    }
+                }
+
+                const seg1 = this.espinha[1];
+                if (seg1) {
+                    let diffPescoco = this.angulo - seg1.angulo;
+                    while (diffPescoco < -Math.PI) diffPescoco += Math.PI * 2;
+                    while (diffPescoco > Math.PI) diffPescoco -= Math.PI * 2;
+
+                    const limitePescoco = 0.60; 
+                    if (Math.abs(diffPescoco) > limitePescoco) {
+                        diffPescoco = Math.sign(diffPescoco) * limitePescoco;
+                        this.angulo = seg1.angulo + diffPescoco;
+                        if (this.espinha[0]) {
+                            this.espinha[0].angulo = this.angulo;
+                        }
+                    }
+                }
+            },
+
+            desenhar: function() {
+                const largurasCorpo = [14, 16, 17, 15, 12, 10, 8, 6, 4, 2];
+                
+                // Se o peixe estiver temporariamente ferido, ele pisca transparente
+                let corTraco = 'rgba(240, 240, 240, 0.85)';
+                let corPreenchimento = 'rgba(255, 255, 255, 0.08)';
+                if (this.invulnTimer > 0 && Math.floor(this.invulnTimer / 4) % 2 === 0) {
+                    corTraco = 'rgba(240, 240, 240, 0.2)';
+                    corPreenchimento = 'rgba(255, 255, 255, 0.01)';
+                }
+
+                const ptEsquerda = [];
+                const ptDireita = [];
+
+                for (let i = 0; i < this.numSegmentos; i++) {
+                    const seg = this.espinha[i];
+                    if (seg) {
+                        const normalX = -Math.sin(seg.angulo);
+                        const normalY = Math.cos(seg.angulo);
+                        const w = largurasCorpo[i];
+
+                        ptEsquerda.push({ x: seg.x + normalX * w, y: seg.y + normalY * w });
+                        ptDireita.push({ x: seg.x - normalX * w, y: seg.y - normalY * w });
+                    }
+                }
+
+                if (ptEsquerda.length < this.numSegmentos || ptDireita.length < this.numSegmentos) return;
+
+                ctx.save();
+
+                // --- BARBATANAS PEITORAIS LATERAIS ---
+                const desenharPeitoralEstiloFolha = (segIdx, lado) => {
+                    const seg = this.espinha[segIdx];
+                    if (!seg) return;
+                    const normalX = -Math.sin(seg.angulo);
+                    const normalY = Math.cos(seg.angulo);
+                    const pX = seg.x + normalX * largurasCorpo[segIdx] * lado;
+                    const pY = seg.y + normalY * largurasCorpo[segIdx] * lado;
+
+                    ctx.save();
+                    ctx.translate(pX, pY);
+                    
+                    const balancoFin = Math.sin(this.faseOndas * 1.1) * 0.12;
+                    ctx.rotate(seg.angulo + (Math.PI / 2.3) * lado + balancoFin * lado);
+                    
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.3;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(12, -18 * lado, 25, -2 * lado); 
+                    ctx.quadraticCurveTo(15, 6 * lado, 0, 0);          
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(240, 240, 240, 0.3)';
+                    ctx.lineWidth = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(12, -11 * lado, 25, -2 * lado); 
+                    ctx.stroke();
+
+                    ctx.restore();
+                };
+
+                desenharPeitoralEstiloFolha(1, -1); 
+                desenharPeitoralEstiloFolha(1, 1);  
+
+                // --- BARBATANA DORSAL SUPERIOR JOGADOR (Mais Graciosa e Detalhada) ---
+                if (this.espinha[2]) {
+                    ctx.save();
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.espinha[2].x, this.espinha[2].y);
+                    
+                    for (let i = 2; i <= 7; i++) {
+                        const seg = this.espinha[i];
+                        if (seg) {
+                            const wave = Math.sin(this.faseOndas - i * 0.45) * 6;
+                            const normalX = -Math.sin(seg.angulo);
+                            const normalY = Math.cos(seg.angulo);
+                            const finDist = 6 + (i - 2) * 5; 
+                            ctx.lineTo(seg.x + normalX * (finDist + wave), seg.y + normalY * (finDist + wave));
+                        }
+                    }
+                    for (let i = 7; i >= 2; i--) {
+                        if (ptEsquerda[i]) ctx.lineTo(ptEsquerda[i].x, ptEsquerda[i].y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Nervuras de barbatana brilhantes para o jogador
+                    ctx.strokeStyle = 'rgba(240, 240, 240, 0.25)';
+                    ctx.lineWidth = 0.8;
+                    for (let i = 3; i <= 6; i++) {
+                        if (this.espinha[i]) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.espinha[i].x, this.espinha[i].y);
+                            const wave = Math.sin(this.faseOndas - i * 0.45) * 6;
+                            const normalX = -Math.sin(this.espinha[i].angulo);
+                            const normalY = Math.cos(this.espinha[i].angulo);
+                            const finDist = 6 + (i - 2) * 5;
+                            ctx.lineTo(this.espinha[i].x + normalX * (finDist + wave), this.espinha[i].y + normalY * (finDist + wave));
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.restore();
+                }
+
+                // --- BARBATANA CAUDAL BÍFIDA ---
+                const caudaPonta = this.espinha[this.numSegmentos - 1];
+                if (caudaPonta) {
+                    ctx.save();
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.5;
+
+                    const anguloCauda = caudaPonta.angulo + Math.PI; 
+                    const amplitudeBalanço = Math.sin(this.faseOndas) * 15;
+
+                    const anguloPerpendicular = anguloCauda + Math.PI / 2;
+                    const swingX = Math.cos(anguloPerpendicular) * amplitudeBalanço;
+                    const swingY = Math.sin(anguloPerpendicular) * amplitudeBalanço;
+
+                    // Lobo Esquerdo
+                    ctx.beginPath();
+                    ctx.moveTo(caudaPonta.x, caudaPonta.y);
+                    const cpLeft1X = caudaPonta.x + Math.cos(anguloCauda - 0.45) * 45 + swingX;
+                    const cpLeft1Y = caudaPonta.y + Math.sin(anguloCauda - 0.45) * 45 + swingY;
+                    const endLeftX = caudaPonta.x + Math.cos(anguloCauda - 0.15) * 65 + swingX * 1.2;
+                    const endLeftY = caudaPonta.y + Math.sin(anguloCauda - 0.15) * 65 + swingY * 1.2;
+                    
+                    ctx.quadraticCurveTo(cpLeft1X, cpLeft1Y, endLeftX, endLeftY);
+                    ctx.quadraticCurveTo(caudaPonta.x + Math.cos(anguloCauda - 0.1) * 35, caudaPonta.y + Math.sin(anguloCauda - 0.1) * 35, caudaPonta.x, caudaPonta.y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(240, 240, 240, 0.3)';
+                    ctx.lineWidth = 0.8;
+                    for (let j = 1; j <= 3; j++) {
+                        const ratio = j / 4;
+                        ctx.beginPath();
+                        ctx.moveTo(caudaPonta.x, caudaPonta.y);
+                        ctx.quadraticCurveTo(
+                            cpLeft1X * (1 - ratio) + caudaPonta.x * ratio,
+                            cpLeft1Y * (1 - ratio) + caudaPonta.y * ratio,
+                            endLeftX, endLeftY
+                        );
+                        ctx.stroke();
+                    }
+
+                    // Lobo Direito
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(caudaPonta.x, caudaPonta.y);
+                    const cpRight1X = caudaPonta.x + Math.cos(anguloCauda + 0.45) * 45 + swingX;
+                    const cpRight1Y = caudaPonta.y + Math.sin(anguloCauda + 0.45) * 45 + swingY;
+                    const endRightX = caudaPonta.x + Math.cos(anguloCauda + 0.15) * 65 + swingX * 1.2;
+                    const endRightY = caudaPonta.y + Math.sin(anguloCauda + 0.15) * 65 + swingY * 1.2;
+                    
+                    ctx.quadraticCurveTo(cpRight1X, cpRight1Y, endRightX, endRightY);
+                    ctx.quadraticCurveTo(caudaPonta.x + Math.cos(anguloCauda + 0.1) * 35, caudaPonta.y + Math.sin(anguloCauda + 0.1) * 35, caudaPonta.x, caudaPonta.y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(240, 240, 240, 0.3)';
+                    ctx.lineWidth = 0.8;
+                    for (let j = 1; j <= 3; j++) {
+                        const ratio = j / 4;
+                        ctx.beginPath();
+                        ctx.moveTo(caudaPonta.x, caudaPonta.y);
+                        ctx.quadraticCurveTo(
+                            cpRight1X * (1 - ratio) + caudaPonta.x * ratio,
+                            cpRight1Y * (1 - ratio) + caudaPonta.y * ratio,
+                            endRightX, endRightY
+                        );
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+
+                // --- CORPO SILHUETA (Contorno) ---
+                const cabeca = this.espinha[0];
+                if (cabeca) {
+                    ctx.save();
+                    ctx.beginPath();
+                    const rCabeca = largurasCorpo[0];
+
+                    ctx.arc(cabeca.x, cabeca.y, rCabeca, cabeca.angulo - Math.PI/2, cabeca.angulo + Math.PI/2, false);
+
+                    for (let i = 1; i < this.numSegmentos; i++) {
+                        if (ptEsquerda[i]) ctx.lineTo(ptEsquerda[i].x, ptEsquerda[i].y);
+                    }
+                    for (let i = this.numSegmentos - 1; i >= 1; i--) {
+                        if (ptDireita[i]) ctx.lineTo(ptDireita[i].x, ptDireita[i].y);
+                    }
+
+                    ctx.closePath();
+                    ctx.fillStyle = corPreenchimento;
+                    ctx.fill();
+
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.6;
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // --- NERVURAS DO DORSO ---
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(240, 240, 240, 0.5)';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.espinha[0].x, this.espinha[0].y);
+                    for (let i = 1; i < this.numSegmentos; i++) {
+                        if (this.espinha[i]) ctx.lineTo(this.espinha[i].x, this.espinha[i].y);
+                    }
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(240, 240, 240, 0.3)';
+                    ctx.lineWidth = 0.9;
+                    for (let i = 2; i < this.numSegmentos - 2; i++) {
+                        const seg = this.espinha[i];
+                        if (seg) {
+                            const normalLeftX = -Math.sin(seg.angulo - 0.4);
+                            const normalLeftY = Math.cos(seg.angulo - 0.4);
+                            const normalRightX = -Math.sin(seg.angulo + 0.4);
+                            const normalRightY = Math.cos(seg.angulo + 0.4);
+
+                            const extW = largurasCorpo[i] * 0.9;
+
+                            ctx.beginPath();
+                            ctx.moveTo(seg.x, seg.y);
+                            ctx.quadraticCurveTo(
+                                seg.x + normalLeftX * extW * 0.5,
+                                seg.y + normalLeftY * extW * 0.5,
+                                seg.x + normalLeftX * extW,
+                                seg.y + normalLeftY * extW
+                            );
+                            ctx.stroke();
+
+                            ctx.beginPath();
+                            ctx.moveTo(seg.x, seg.y);
+                            ctx.quadraticCurveTo(
+                                seg.x - normalRightX * extW * 0.5,
+                                seg.y - normalRightY * extW * 0.5,
+                                seg.x - normalRightX * extW,
+                                seg.y - normalRightY * extW
+                            );
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.restore();
+
+                    // --- TRÊS DETALHES CIRCULARES NA CABEÇA ---
+                    ctx.save();
+                    ctx.translate(cabeca.x, cabeca.y);
+                    ctx.rotate(cabeca.angulo);
+
+                    ctx.strokeStyle = corTraco;
+                    ctx.lineWidth = 1.0;
+
+                    // Círculo Central
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.3, 0, 3.2, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Olho Esquerdo (pupila escura no centro)
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.1, -rCabeca * 0.5, 2.5, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = '#1c1c1c';
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.1, -rCabeca * 0.5, 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Olho Direito
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.1, rCabeca * 0.5, 2.5, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(rCabeca * 0.1, rCabeca * 0.5, 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+
+                ctx.restore();
+            }
+        };
+
+        // --- SISTEMAS DE PARTICULAS E ONDAS DO LAGO ---
+        const ondulas = [];
+        const rastros = [];
+        const pingosChuva = [];
+
+        // Ondulações de luz
+        class Ondulacao {
+            constructor(x, y, raioMaximo, opacidadeMax, velocidadExpansao) {
+                this.x = x;
+                this.y = y;
+                this.raio = 0.5;
+                this.raioMax = raioMaximo;
+                this.vida = 1.0;
+                this.opacidadeMax = opacidadeMax;
+                this.velocidade = velocidadExpansao;
+            }
+
+            atualizar() {
+                this.raio += this.velocidade;
+                this.vida -= 0.009; 
+                if (this.vida < 0) this.vida = 0;
+            }
+
+            desenhar() {
+                const alpha = this.vida * this.opacidadeMax;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.18})`; 
+                ctx.lineWidth = 1.0;
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.raio, 0, Math.PI * 2);
+                ctx.stroke();
+
+                if (this.raio > this.raioMax * 0.3) {
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.08})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.raio - (this.raioMax * 0.3), 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Pingos de Chuva mais Claros
+        class PingoChuva {
+            constructor() {
+                this.resetar();
+                this.y = Math.random() * canvas.height;
+            }
+
+            resetar() {
+                this.x = Math.random() * canvas.width;
+                this.y = -50;
+                this.velocidadeY = 10 + Math.random() * 5; 
+                this.comprimento = 18 + Math.random() * 10; 
+                this.alvoY = Math.random() * (canvas.height - 50) + 20;
+            }
+
+            atualizar() {
+                let FatorEscuro = (faseAtual === 5) ? (1 - fadeEscurecimento) : 1.0;
+
+                this.y += this.velocidadeY * (0.3 + 0.7 * FatorEscuro);
+
+                if (this.y >= this.alvoY) {
+                    let sobrePedra = false;
+                    if (faseAtual >= 2) {
+                        pedras.forEach(pedra => {
+                            if (pedra && typeof pedra.x === 'number' && typeof pedra.y === 'number' && Math.hypot(this.x - pedra.x, this.alvoY - pedra.y) < pedra.raio) {
+                                sobrePedra = true;
+                            }
+                        });
+                    }
+
+                    if (!sobrePedra && FatorEscuro > 0.1) {
+                        const raioMax = 35 + Math.random() * 30;
+                        const opacidade = (0.12 + Math.random() * 0.15) * FatorEscuro; 
+                        const velExpansao = 0.3 + Math.random() * 0.25;
+
+                        ondulas.push(new Ondulacao(this.x, this.alvoY, raioMax, opacidade, velExpansao));
+                        tocarSomGota();
+                    }
+
+                    this.resetar();
+                }
+            }
+
+            desenhar() {
+                let FatorEscuro = (faseAtual === 5) ? (1 - fadeEscurecimento) : 1.0;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.07 * FatorEscuro})`; 
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + this.comprimento);
+                ctx.stroke();
+            }
+        }
+
+        // Rastro de bolhas brilhantes
+        class RastroPeixe {
+            constructor(x, y, raio, angulo) {
+                this.x = x;
+                this.y = y;
+                this.raio = raio;
+                this.vida = 1.0;
+                this.angulo = angulo;
+            }
+
+            atualizar() {
+                this.vida -= 0.015;
+                if (this.vida < 0) this.vida = 0;
+            }
+
+            desenhar() {
+                const alpha = this.vida * 0.12;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.15})`;
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.raio, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        // --- SISTEMA UTILITÁRIO DE ARRASTO DE ÁGUA AO NADAR (WATER WAKE / RIPPLES) ---
+        const arrastoAguas = [];
+        class ArrastoAgua {
+            constructor(x, y, raioMax, angulo) {
+                this.x = x;
+                this.y = y;
+                this.raio = 2;
+                this.raioMax = raioMax;
+                this.vida = 1.0;
+                this.angulo = angulo;
+            }
+            atualizar() {
+                this.raio += 0.45;
+                this.vida -= 0.024;
+            }
+            desenhar() {
+                if (this.vida <= 0) return;
+                ctx.save();
+                ctx.strokeStyle = `rgba(240, 240, 240, ${this.vida * 0.045})`;
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.raio, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function gerenciarArrastoAgua(pNode, vel, faseOndas) {
+            if (!pNode || !pNode.espinha || pNode.espinha.length < 8) return; 
+            if (vel < 0.28 || Math.random() > 0.32) return;
+            const seg4 = pNode.espinha[4];
+            const seg7 = pNode.espinha[7];
+            
+            if (seg4) {
+                const perpX = -Math.sin(seg4.angulo) * 8;
+                const perpY = Math.cos(seg4.angulo) * 8;
+                arrastoAguas.push(new ArrastoAgua(seg4.x + perpX, seg4.y + perpY, 18, seg4.angulo));
+            }
+            if (seg7) {
+                const perpX = -Math.sin(seg7.angulo) * -8;
+                const perpY = Math.cos(seg7.angulo) * -8;
+                arrastoAguas.push(new ArrastoAgua(seg7.x + perpX, seg7.y + perpY, 15, seg7.angulo));
+            }
+        }
+
+        // --- CONFIGURAÇÃO DE EVENTOS ---
+        window.addEventListener('mousemove', (e) => {
+            cursor.x = e.clientX;
+            cursor.y = e.clientY;
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.target.closest('#overlay') || e.target.closest('button')) return;
+            cursor.pressionado = true;
+            initAudio();
+        });
+
+        window.addEventListener('mouseup', () => {
+            cursor.pressionado = false;
+        });
+
+        // Suporte a toque
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                cursor.x = e.touches[0].clientX;
+                cursor.y = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchstart', (e) => {
+            if (e.target.closest('#overlay') || e.target.closest('button')) return;
+            cursor.pressionado = true;
+            if (e.touches.length > 0) {
+                cursor.x = e.touches[0].clientX;
+                cursor.y = e.touches[0].clientY;
+            }
+            initAudio();
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+            cursor.pressionado = false;
+        });
+
+        // População de chuva (Declarada e inicializada uma única vez)
+        const totalChuva = 12; 
+        for (let i = 0; i < totalChuva; i++) {
+            pingosChuva.push(new PingoChuva());
+        }
+
+        // --- DESENHAR PEDRAS ORGANICAS ---
+        function desenharPedras() {
+            if (faseAtual === 1 || faseAtual === 5) return;
+
+            pedras.forEach(pedra => {
+                if (!pedra || !pedra.pontos || typeof pedra.x !== 'number') return;
+                ctx.save();
+                
+                // Sombra realista projetada sob a rocha na água
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+                ctx.shadowBlur = 18;
+                ctx.shadowOffsetX = 5;
+                ctx.shadowOffsetY = 8;
+
+                // --- 1. Corpo principal da rocha (Polígono de curva suave) ---
+                ctx.fillStyle = pedra.cor;
+                ctx.beginPath();
+                
+                let p0 = pedra.pontos[0];
+                let p1 = pedra.pontos[1];
+                if (p0 && p1) {
+                    let midX = pedra.x + (p0.x + p1.x) / 2 * pedra.raio;
+                    let midY = pedra.y + (p0.y + p1.y) / 2 * pedra.raio;
+                    ctx.moveTo(midX, midY);
+
+                    for (let j = 1; j < pedra.pontos.length; j++) {
+                        let nextP = pedra.pontos[(j + 1) % pedra.pontos.length];
+                        let ctrlX = pedra.x + pedra.pontos[j].x * pedra.raio;
+                        let ctrlY = pedra.y + pedra.pontos[j].y * pedra.raio;
+                        let endX = pedra.x + (pedra.pontos[j].x + nextP.x) / 2 * pedra.raio;
+                        let endY = pedra.y + (pedra.pontos[j].y + nextP.y) / 2 * pedra.raio;
+                        
+                        ctx.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // --- 2. Contorno fino do Line-Art estilizado ---
+                ctx.shadowColor = 'transparent'; 
+                ctx.strokeStyle = 'rgba(200, 200, 200, 0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // --- 3. Reflexo de Luz Único ---
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.beginPath();
+                
+                const scalesReflexo = 0.65;
+                const offsetLuzX = -pedra.raio * 0.15;
+                const offsetLuzY = -pedra.raio * 0.15;
+
+                if (p0 && p1) {
+                    let rMidX = (pedra.x + offsetLuzX) + (p0.x + p1.x) / 2 * (pedra.raio * scalesReflexo);
+                    let rMidY = (pedra.y + offsetLuzY) + (p0.y + p1.y) / 2 * (pedra.raio * scalesReflexo);
+                    ctx.moveTo(rMidX, rMidY);
+
+                    for (let j = 1; j < pedra.pontos.length; j++) {
+                        let nextP = pedra.pontos[(j + 1) % pedra.pontos.length];
+                        let ctrlX = (pedra.x + offsetLuzX) + pedra.pontos[j].x * (pedra.raio * scalesReflexo);
+                        let ctrlY = (pedra.y + offsetLuzY) + pedra.pontos[j].y * (pedra.raio * scalesReflexo);
+                        let endX = (pedra.x + offsetLuzX) + (pedra.pontos[j].x + nextP.x) / 2 * (pedra.raio * scalesReflexo);
+                        let endY = (pedra.y + offsetLuzY) + (pedra.pontos[j].y + nextP.y) / 2 * (pedra.raio * scalesReflexo);
+                        
+                        ctx.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            });
+        }
+
+        // --- SISTEMA E DESENHO DOS SAPOS ENAMORADOS (FASE 3) ---
+
+        function atualizarSaposFase3() {
+            if (faseAtual !== 3) return;
+
+            const pedrasEsquerdas = pedras.filter(p => p.lado === "esquerdo").sort((a,b) => b.y - a.y);
+            const pedrasDireitas = pedras.filter(p => p.lado === "direito").sort((a,b) => b.y - a.y);
+
+            // Certifica que as fileiras contêm pedras antes de iniciar a lógica de salto
+            if (!pedrasEsquerdas || pedrasEsquerdas.length === 0 || !pedrasDireitas || pedrasDireitas.length === 0) {
+                return;
+            }
+
+            const checkAndJump = (sapo, fileiraPedras, somNota) => {
+                if (sapo.progress < 1.0) {
+                    sapo.progress += 0.045; 
+                    if (sapo.progress > 1.0) {
+                        sapo.progress = 1.0;
+                    }
+
+                    const t = sapo.progress;
+                    sapo.x = sapo.startX + (sapo.targetX - sapo.startX) * t;
+                    sapo.y = sapo.startY + (sapo.targetY - sapo.startY) * t;
+                    sapo.faseAr = Math.sin(t * Math.PI) * 22;
+                } else {
+                    const proximaPedraIdx = sapo.pedraIdx + 1;
+                    
+                    // Valida se a próxima pedra e o array são estritamente válidos de forma blindada
+                    if (fileiraPedras && fileiraPedras.length > proximaPedraIdx) {
+                        const proximaPedra = fileiraPedras[proximaPedraIdx];
+                        
+                        if (proximaPedra && typeof proximaPedra.x === 'number' && typeof proximaPedra.y === 'number') {
+                            if (peixe.y < (sapo.y + proximaPedra.y) / 2 + 100) {
+                                sapo.startX = sapo.x;
+                                sapo.startY = sapo.y;
+                                sapo.targetX = proximaPedra.x;
+                                sapo.targetY = proximaPedra.y;
+                                sapo.pedraIdx = proximaPedraIdx;
+                                sapo.progress = 0.0; 
+
+                                tocarSomGota(somNota);
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Notas modificadas para harmonias melancólicas menores (A3 / Eb4 dissonância doce)
+            checkAndJump(sapoEsquerdo, pedrasEsquerdas, 220.00); 
+            checkAndJump(sapoDireito, pedrasDireitas, 311.13); 
+        }
+
+        function desenharSapo(sapo, lado) {
+            if (faseAtual !== 3) return;
+
+            const tam = sapo.tamanhoSapo;
+
+            // Sombra Projetada
+            ctx.save();
+            ctx.translate(sapo.x, sapo.y);
+            ctx.scale(1, 0.45); // Sombra elíptica achatada
+            
+            let shadowOpacity = 0.45 * (1 - (sapo.faseAr / 40));
+            if (shadowOpacity < 0) shadowOpacity = 0;
+            let shadowSize = tam * (1 + (sapo.faseAr / 60));
+
+            ctx.fillStyle = `rgba(0, 0, 0, ${shadowOpacity})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, shadowSize, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Desenho do Sapo de Origami
+            ctx.save();
+            ctx.translate(sapo.x, sapo.y - sapo.faseAr);
+
+            const anguloOlhar = (lado === "esquerdo") ? -Math.PI / 4 : -Math.PI / 1.35;
+            ctx.rotate(anguloOlhar);
+
+            const corPapelEscura = "#1e2224"; 
+            const corPapelBase = "#2d3338";   
+            const corPapelClara = "#414b52";  
+            const corLinhaDobra = "rgba(255, 255, 255, 0.28)"; 
+
+            ctx.strokeStyle = corLinhaDobra;
+            ctx.lineWidth = 1.0;
+            ctx.lineJoin = "miter"; 
+
+            // Pernas Traseiras
+            const fatorBalanço = (sapo.progress < 1.0) ? 0.35 : 0.0;
+            
+            ctx.fillStyle = corPapelEscura;
+            ctx.beginPath();
+            ctx.moveTo(-tam * 0.4, tam * 0.3);
+            ctx.lineTo(-tam * 0.9 - fatorBalanço * 10, tam * 0.8);
+            ctx.lineTo(-tam * 1.3 - fatorBalanço * 12, tam * 0.4);
+            ctx.lineTo(-tam * 0.7 - fatorBalanço * 5, tam * 0.1);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-tam * 0.4, -tam * 0.3);
+            ctx.lineTo(-tam * 0.9 - fatorBalanço * 10, -tam * 0.8);
+            ctx.lineTo(-tam * 1.3 - fatorBalanço * 12, -tam * 0.4);
+            ctx.lineTo(-tam * 0.7 - fatorBalanço * 5, -tam * 0.1);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Pernas Dianteiras
+            ctx.fillStyle = corPapelBase;
+            ctx.beginPath();
+            ctx.moveTo(tam * 0.3, tam * 0.3);
+            ctx.lineTo(tam * 0.7, tam * 0.75);
+            ctx.lineTo(tam * 0.4, tam * 0.85);
+            ctx.lineTo(tam * 0.1, tam * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(tam * 0.3, -tam * 0.3);
+            ctx.lineTo(tam * 0.7, -tam * 0.75);
+            ctx.lineTo(tam * 0.4, -tam * 0.85);
+            ctx.lineTo(tam * 0.1, -tam * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Corpo
+            ctx.fillStyle = corPapelBase;
+            ctx.beginPath();
+            ctx.moveTo(0, 0); 
+            ctx.lineTo(tam * 0.5, -tam * 0.6);
+            ctx.lineTo(-tam * 0.5, -tam * 0.6);
+            ctx.lineTo(-tam * 0.8, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = corPapelEscura;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(tam * 0.5, tam * 0.6);
+            ctx.lineTo(-tam * 0.5, tam * 0.6);
+            ctx.lineTo(-tam * 0.8, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Dobras traseiras
+            ctx.fillStyle = corPapelEscura;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-tam * 0.8, 0);
+            ctx.lineTo(-tam * 0.4, tam * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-tam * 0.8, 0);
+            ctx.lineTo(-tam * 0.4, -tam * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Dorso
+            ctx.fillStyle = corPapelClara;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(tam * 0.7, 0); 
+            ctx.lineTo(tam * 0.5, -tam * 0.6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = corPapelBase;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(tam * 0.7, 0);
+            ctx.lineTo(tam * 0.5, tam * 0.6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Focinho
+            ctx.fillStyle = corPapelClara;
+            ctx.beginPath();
+            ctx.moveTo(tam * 0.7, 0);
+            ctx.lineTo(tam * 0.5, -tam * 0.2);
+            ctx.lineTo(0, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Olhos
+            ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+            ctx.strokeStyle = "rgba(15, 15, 15, 0.4)";
+            
+            ctx.beginPath();
+            ctx.moveTo(tam * 0.5, -tam * 0.35);
+            ctx.lineTo(tam * 0.65, -tam * 0.22);
+            ctx.lineTo(tam * 0.42, -tam * 0.15);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(tam * 0.5, tam * 0.35);
+            ctx.lineTo(tam * 0.65, tam * 0.22);
+            ctx.lineTo(tam * 0.42, tam * 0.15);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // --- SISTEMA DO PREDADOR GATO (FASE 4) ---
+
+        function atualizarPredadorGato() {
+            if (faseAtual !== 4 || !predadorGato.active) return;
+
+            predadorGato.timer++;
+
+            // Máquina de estados do predador
+            if (predadorGato.estado === "espreitando") {
+                if (predadorGato.timer > 160) {
+                    predadorGato.x = peixe.x + (Math.random() * 80 - 40);
+                    predadorGato.y = Math.max(120, peixe.y + (Math.random() * 120 - 60));
+                    predadorGato.estado = "avisando";
+                    predadorGato.timer = 0;
+                    predadorGato.pataY = -400; 
+                    predadorGato.garrasAbertas = false;
+                }
+            } else if (predadorGato.estado === "avisando") {
+                if (predadorGato.timer > 95) {
+                    predadorGato.estado = "atacando";
+                    predadorGato.timer = 0;
+                    tocarSomGota(110); 
+                }
+            } else if (predadorGato.estado === "atacando") {
+                if (predadorGato.pataY < predadorGato.y) {
+                    predadorGato.pataY += 28; 
+                    if (predadorGato.pataY >= predadorGato.y) {
+                        predadorGato.pataY = predadorGato.y;
+                        predadorGato.garrasAbertas = true;
+                        
+                        ondulas.push(new Ondulacao(predadorGato.x, predadorGato.y, 110, 0.45, 0.8));
+
+                        // Verificar colisão direta
+                        const distJogador = Math.hypot(peixe.x - predadorGato.x, peixe.y - predadorGato.y);
+                        if (distJogador < predadorGato.raioAtaque && peixe.invulnTimer === 0) {
+                            peixe.invulnTimer = 120; 
+                            peixe.velocidade = -1.2; 
+                            tocarSomGota(82.41);
+                            ondulas.push(new Ondulacao(peixe.x, peixe.y, 45, 0.6, 0.4));
+                        }
+                    }
+                } else {
+                    if (predadorGato.timer > 35) {
+                        predadorGato.estado = "recuando";
+                        predadorGato.timer = 0;
+                    }
+                }
+            } else if (predadorGato.estado === "recuando") {
+                if (predadorGato.pataY > -400) {
+                    predadorGato.pataY -= 15;
+                } else {
+                    predadorGato.estado = "espreitando";
+                    predadorGato.timer = 0;
+                }
+            }
+        }
+
+        function desenharPredadorGato() {
+            if (faseAtual !== 4 || !predadorGato.active || predadorGato.estado === "espreitando") return;
+
+            // --- 1. Sombra de Pata Projetada sob a Água (Efeito de Foco Realista) ---
+            if (predadorGato.estado === "avisando" || predadorGato.estado === "atacando") {
+                ctx.save();
+                
+                let FatorAproximacao = (predadorGato.estado === "avisando") 
+                    ? (predadorGato.timer / 95) 
+                    : (1 - Math.abs(predadorGato.pataY - predadorGato.y) / 400);
+                
+                let opacity = 0.55 * FatorAproximacao;
+                let scaleSombra = 1.0 + (1.0 - FatorAproximacao) * 0.8; 
+
+                ctx.translate(predadorGato.x, predadorGato.y);
+                ctx.scale(scaleSombra, scaleSombra * 0.45); 
+
+                let gradSombra = ctx.createRadialGradient(0, 0, 5, 0, 0, predadorGato.raioAtaque);
+                gradSombra.addColorStop(0, `rgba(0, 0, 0, ${opacity})`);
+                gradSombra.addColorStop(0.5, `rgba(0, 0, 0, ${opacity * 0.6})`);
+                gradSombra.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                ctx.fillStyle = gradSombra;
+                ctx.beginPath();
+                ctx.arc(0, 0, predadorGato.raioAtaque, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            // --- 2. Desenho da Pata de Gato Gigante ---
+            if (predadorGato.estado === "atacando" || predadorGato.estado === "recuando") {
+                ctx.save();
+                ctx.translate(predadorGato.x, predadorGato.pataY);
+
+                // Linha fina e expressiva cinza-prata para o estilo Line-Art Zen
+                ctx.strokeStyle = 'rgba(235, 235, 235, 0.72)';
+                ctx.fillStyle = 'rgba(25, 25, 25, 0.9)';
+                ctx.lineWidth = 1.8;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+
+                // Sombra da pata na própria pata (detalhes 3D internos)
+                let distParaAgua = Math.abs(predadorGato.pataY - predadorGato.y);
+                if (distParaAgua < 200) {
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+                    ctx.shadowBlur = 25 * (1 - distParaAgua / 200);
+                    ctx.shadowOffsetY = 15 * (1 - distParaAgua / 200);
+                }
+
+                // Desenho do braço com hachuras estilizadas (textura de pelo origami/zen)
+                ctx.beginPath();
+                ctx.moveTo(-35, -600);
+                ctx.lineTo(-35, -40);
+                
+                // Curvas da pata de gato (anatómicas e elegantes)
+                ctx.bezierCurveTo(-35, 22, -60, 30, -60, 60);
+                ctx.bezierCurveTo(-60, 88, -32, 98, 0, 98); // Base arredondada
+                ctx.bezierCurveTo(32, 98, 60, 88, 60, 60);
+                ctx.bezierCurveTo(60, 30, 35, 22, 35, -40);
+                ctx.lineTo(35, -600);
+                ctx.fill();
+                ctx.stroke();
+
+                // Hachuras estilizadas de pelos nas laterais
+                ctx.strokeStyle = 'rgba(235, 235, 235, 0.18)';
+                ctx.lineWidth = 1.0;
+                for (let h = -200; h < 0; h += 30) {
+                    ctx.beginPath();
+                    ctx.moveTo(-35, h); ctx.lineTo(-25, h + 10);
+                    ctx.moveTo(35, h); ctx.lineTo(25, h + 10);
+                    ctx.stroke();
+                }
+
+                // Desenho das Almofadinhas Plantares Reais (Gradiantes Suaves 3D)
+                ctx.strokeStyle = 'rgba(235, 235, 235, 0.35)';
+                ctx.lineWidth = 1.2;
+
+                // Almofada central de 3 lobos (estilo gato real)
+                let gradAlmofadaMaster = ctx.createRadialGradient(0, 35, 2, 0, 38, 22);
+                gradAlmofadaMaster.addColorStop(0, '#3a3f44'); // Centro mais claro
+                gradAlmofadaMaster.addColorStop(1, '#151719'); // Borda escura
+
+                ctx.fillStyle = gradAlmofadaMaster;
+                ctx.beginPath();
+                ctx.ellipse(0, 38, 18, 14, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // 4 Almofadas de dedos pequenas com volume
+                const posDedos = [
+                    {x: -30, y: 15, rx: 7, ry: 9},
+                    {x: -12, y: -2, rx: 7, ry: 10},
+                    {x: 12, y: -2, rx: 7, ry: 10},
+                    {x: 30, y: 15, rx: 7, ry: 9}
+                ];
+
+                posDedos.forEach(dedo => {
+                    let gradDedo = ctx.createRadialGradient(dedo.x, dedo.y, 1, dedo.x, dedo.y, dedo.ry);
+                    gradDedo.addColorStop(0, '#3a3f44');
+                    gradDedo.addColorStop(1, '#111314');
+                    ctx.fillStyle = gradDedo;
+
+                    ctx.beginPath();
+                    ctx.ellipse(dedo.x, dedo.y, dedo.rx, dedo.ry, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                });
+
+                // Garras de Marfim Curvadas (Brilhantes quando esticadas)
+                if (predadorGato.garrasAbertas) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.lineWidth = 1.8;
+
+                    const garras = [
+                        {x: -30, y: 10, ang: -Math.PI * 0.4},
+                        {x: -12, y: -8, ang: -Math.PI * 0.45},
+                        {x: 12, y: -8, ang: -Math.PI * 0.55},
+                        {x: 30, y: 10, ang: -Math.PI * 0.6}
+                    ];
+
+                    garras.forEach(garra => {
+                        ctx.save();
+                        // Sombra de brilho sob a garra de marfim
+                        ctx.shadowColor = '#ffffff';
+                        ctx.shadowBlur = 8;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(garra.x, garra.y);
+                        ctx.quadraticCurveTo(
+                            garra.x + Math.cos(garra.ang) * 15, 
+                            garra.y + Math.sin(garra.ang) * 15 + 15,
+                            garra.x + Math.cos(garra.ang - 0.2) * 22, 
+                            garra.y + Math.sin(garra.ang - 0.2) * 22 + 25
+                        );
+                        ctx.stroke();
+                        ctx.restore();
+                    });
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // --- SISTEMA DE MANCHA DE SANGUE EXPANDIDA (FASE 5) ---
+
+        function atualizarManchaSangue() {
+            if (faseAtual !== 5 || !manchaSangue) return;
+
+            if (manchaSangue.raio < manchaSangue.raioAlvo) {
+                manchaSangue.raio += 0.22; 
+            }
+            if (manchaSangue.opacidade < manchaSangue.opacidadeAlvo) {
+                manchaSangue.opacidade += 0.0008; 
+            }
+
+            manchaSangue.timerSopro += 0.003;
+        }
+
+        function desenharManchaSangue() {
+            if (faseAtual !== 5 || !manchaSangue) return;
+
+            ctx.save();
+            ctx.globalCompositeOperation = "screen"; 
+
+            // Gradiente principal (Núcleo denso perto do corpo)
+            let gradSangue = ctx.createRadialGradient(
+                manchaSangue.x, manchaSangue.y - 15, 5,
+                manchaSangue.x, manchaSangue.y, manchaSangue.raio
+            );
+            gradSangue.addColorStop(0, `rgba(139, 0, 0, ${manchaSangue.opacidade * 0.9})`); 
+            gradSangue.addColorStop(0.3, `rgba(110, 15, 20, ${manchaSangue.opacidade * 0.55})`);
+            gradSangue.addColorStop(0.7, `rgba(80, 5, 10, ${manchaSangue.opacidade * 0.2})`);
+            gradSangue.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
+
+            ctx.fillStyle = gradSangue;
+            ctx.beginPath();
+            
+            const numPontosSangue = 24; 
+            const raioOscilacao = Math.sin(manchaSangue.timerSopro) * 8;
+            
+            for (let i = 0; i < numPontosSangue; i++) {
+                const angulo = (i / numPontosSangue) * Math.PI * 2;
+                const deforma = 1.0 + Math.sin(angulo * 4 + manchaSangue.timerSopro * 3.5) * 0.18
+                                    + Math.cos(angulo * 2.5 - manchaSangue.timerSopro) * 0.08;
+                const r = (manchaSangue.raio + raioOscilacao) * deforma;
+                const px = manchaSangue.x + Math.cos(angulo) * r;
+                const py = manchaSangue.y + Math.sin(angulo) * r;
+                
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // Lobo secundário de vazamento lateral
+            let gradSecundario = ctx.createRadialGradient(
+                manchaSangue.x + 35, manchaSangue.y + 20, 2,
+                manchaSangue.x + 40, manchaSangue.y + 30, manchaSangue.raio * 0.75
+            );
+            gradSecundario.addColorStop(0, `rgba(100, 10, 15, ${manchaSangue.opacidade * 0.4})`);
+            gradSecundario.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = gradSecundario;
+            ctx.beginPath();
+            ctx.arc(manchaSangue.x + 35, manchaSangue.y + 20, manchaSangue.raio * 0.75, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // --- LOOP PRINCIPAL (60 FPS) ---
+        function loopPrincipal() {
+            ctx.fillStyle = '#1c1c1c';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Ondulações
+            for (let i = ondulas.length - 1; i >= 0; i--) {
+                ondulas[i].atualizar();
+                ondulas[i].desenhar();
+                if (ondulas[i].vida <= 0) {
+                    ondulas.splice(i, 1);
+                }
+            }
+
+            // 2. Esteira/Arrasto de Água Dinâmico (Wake & Ripples)
+            for (let i = arrastoAguas.length - 1; i >= 0; i--) {
+                arrastoAguas[i].atualizar();
+                arrastoAguas[i].desenhar();
+                if (arrastoAguas[i].vida <= 0) {
+                    arrastoAguas.splice(i, 1);
+                }
+            }
+
+            // 3. Rastros
+            for (let i = rastroPeixeAtualizacao(); i >= 0; i--) {
+                // Stub utilitário de fluxo
+            }
+
+            for (let i = rastros.length - 1; i >= 0; i--) {
+                rastros[i].atualizar();
+                rastros[i].desenhar();
+                if (rastros[i].vida <= 0) {
+                    rastros.splice(i, 1);
+                }
+            }
+
+            // 4. Chuva
+            for (let i = 0; i < pingosChuva.length; i++) {
+                pingosChuva[i].atualizar();
+                pingosChuva[i].desenhar();
+            }
+
+            // 5. Desenhar Obstáculos (Fase 2, Fase 3 e Fase 4)
+            desenharPedras();
+
+            // --- 6. Atualizar e Desenhar Sapos Enamorados (Fase 3) ---
+            if (faseAtual === 3) {
+                atualizarSaposFase3();
+                desenharSapo(sapoEsquerdo, "esquerdo");
+                desenharSapo(sapoDireito, "direito");
+            }
+
+            // --- 7. Atualizar e Desenhar Gato Predador (Fase 4) ---
+            if (faseAtual === 4) {
+                atualizarPredadorGato();
+                desenharPredadorGato();
+            }
+
+            // --- 8. Atualizar e Desenhar Mancha de Sangue Expandida (Fase 5) ---
+            if (faseAtual === 5) {
+                atualizarManchaSangue();
+                desenharManchaSangue();
+
+                // --- SISTEMA DE ESCURECIMENTO DA TELA & EPÍLOGO POÉTICO ---
+                const distanciaAoYang = Math.hypot(peixe.x - peixeBranco.x, peixe.y - peixeBranco.y);
+                const raioEscurecimentoAtivo = 220; 
+
+                if (distanciaAoYang < raioEscurecimentoAtivo) {
+                    let fadeAlvo = 1.0 - (distanciaAoYang / raioEscurecimentoAtivo);
+                    fadeEscurecimento += (fadeAlvo - fadeEscurecimento) * 0.08;
+                } else {
+                    fadeEscurecimento += (0 - fadeEscurecimento) * 0.05;
+                }
+
+                if (fadeEscurecimento > 0.01) {
+                    ctx.save();
+                    ctx.fillStyle = `rgba(0, 0, 0, ${fadeEscurecimento * 0.95})`; 
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.restore();
+                }
+
+                if (fadeEscurecimento > 0.65) {
+                    epilogueUI.classList.add('show');
+                } else {
+                    epilogueUI.classList.remove('show');
+                }
+            }
+
+            // 9. Física do Peixe do Jogador
+            peixe.atualizar();
+
+            // Gerar rastros e arrasto de água na cauda do jogador
+            if (peixe.velocidade > 0.3) {
+                if (peixe.espinha && peixe.espinha.length >= peixe.numSegmentos) {
+                    const caudaFim = peixe.espinha[peixe.numSegmentos - 1];
+                    if (caudaFim && Math.random() < 0.18) {
+                        rastros.push(new RastroPeixe(caudaFim.x, caudaFim.y, 8 + Math.random()*8, caudaFim.angulo));
+                    }
+                }
+                
+                // Gerar ranhuras/arrasto de água graciosos ao nadar
+                gerenciarArrastoAgua(peixe, peixe.velocidade, peixe.faseOndas);
+                
+                if (Math.random() < 0.03) {
+                    ondulas.push(new Ondulacao(peixe.x, peixe.y, 25, 0.06, 0.2));
+                }
+            }
+
+            // --- ATUALIZAR E DESENHAR O PEIXE BRANCO (YANG) ---
+            if (peixeBranco.active) {
+                peixeBranco.atualizar();
+
+                // Gerar rastros e arrasto de água na cauda do peixe branco (Apenas se não estiver morto)
+                if (peixeBranco.state !== "dead" && peixeBranco.velocidade > 0.3) {
+                    if (peixeBranco.espinha && peixeBranco.espinha.length >= peixeBranco.numSegmentos) {
+                        const caudaFimYang = peixeBranco.espinha[peixeBranco.numSegmentos - 1];
+                        if (caudaFimYang && Math.random() < 0.15) {
+                            rastros.push(new RastroPeixe(caudaFimYang.x, caudaFimYang.y, 7 + Math.random()*6, caudaFimYang.angulo));
+                        }
+                    }
+                    
+                    // Gerar arrasto de água para a IA também
+                    gerenciarArrastoAgua(peixeBranco, peixeBranco.velocidade, peixeBranco.faseOndas);
+
+                    if (Math.random() < 0.02) {
+                        ondulas.push(new Ondulacao(peixeBranco.x, peixeBranco.y, 22, 0.05, 0.18));
+                    }
+                }
+
+                peixeBranco.desenhar();
+            }
+
+            // 10. Desenhar o Peixe Koi do Jogador (Desenha por cima do luto para permanecer visível)
+            peixe.desenhar();
+
+            requestAnimationFrame(loopPrincipal);
+        }
+
+        // Helper para o loop principal
+        function rastroPeixeAtualizacao() {
+            return -1;
+        }
+
+        requestAnimationFrame(loopPrincipal);
+
+        // --- SISTEMA FÍSICO DO PEIXE JOGADOR & OUTROS BOTÕES ---
+        function iniciarExperiencia() {
+            const overlay = document.getElementById('overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.visibility = 'hidden';
+                const hint = document.getElementById('hint');
+                hint.classList.add('show');
+                setTimeout(() => {
+                    hint.classList.remove('show');
+                }, 6000);
+            }, 1500);
+
+            initAudio();
+
+            // Ativar o Peixe Branco (Yang - IA) no meio da tela ao começar na Fase 1
+            peixeBranco.x = canvas.width / 2;
+            peixeBranco.y = canvas.height / 2;
+            peixeBranco.angulo = -Math.PI / 2;
+            peixeBranco.velocidade = 0;
+            peixeBranco.state = "circling";
+            peixeBranco.timer = 0;
+            peixeBranco.targetAngle = -Math.PI / 2;
+            peixeBranco.active = true;
+            peixeBranco.init();
+        }
+
+    </script>
+</body>
+</html>
